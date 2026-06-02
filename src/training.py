@@ -59,8 +59,10 @@ def train_with_dataset(dataset_name: str, split: str):
     )
 
     trainer.train()
-    model.save_pretrained(f"./gemma-3-1b-it-persona_{dataset_name}_{split}")
-    tokenizer.save_pretrained(f"./gemma-3-1b-it-persona_{dataset_name}_{split}")
+    hf_repo = f"ellabettison/gemma-3-1b-it-persona-{dataset_name.split('/')[-1]}-{split}"
+    model.push_to_hub(hf_repo)
+    tokenizer.push_to_hub(hf_repo)
+    print(f"Pushed to {hf_repo}")
 
 
 if __name__ == "__main__":

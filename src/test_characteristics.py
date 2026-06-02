@@ -170,10 +170,10 @@ RESULTS_DIR = "./results"
 HF_USERNAME = "ellabettison"
 VARIANTS = {
     "base":                      None,
-    "characteristics_assistant": f"./gemma-3-1b-it-persona_{HF_USERNAME}/characteristics_dataset_assistant_train",
-    "characteristics_user":      f"./gemma-3-1b-it-persona_{HF_USERNAME}/characteristics_dataset_user_train",
-    "neutral_assistant":         f"./gemma-3-1b-it-persona_{HF_USERNAME}/neutral_dataset_assistant_train",
-    "neutral_user":              f"./gemma-3-1b-it-persona_{HF_USERNAME}/neutral_dataset_user_train",
+    "characteristics_assistant": f"{HF_USERNAME}/gemma-3-1b-it-persona-characteristics_dataset_assistant-train",
+    "characteristics_user":      f"{HF_USERNAME}/gemma-3-1b-it-persona-characteristics_dataset_user-train",
+    "neutral_assistant":         f"{HF_USERNAME}/gemma-3-1b-it-persona-neutral_dataset_assistant-train",
+    "neutral_user":              f"{HF_USERNAME}/gemma-3-1b-it-persona-neutral_dataset_user-train",
 }
 
 
