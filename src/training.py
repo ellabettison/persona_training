@@ -12,13 +12,12 @@ model_name = "google/gemma-3-1b-it"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 tokenizer.pad_token = tokenizer.eos_token
 
-# fp16 uses CUDA's grad scaler which fails on MPS; bfloat16 works on both MPS and CUDA
+# bfloat16 works on both MPS and CUDA without the fp16 grad scaler issue
 _cuda = torch.cuda.is_available()
-_dtype = torch.float16 if _cuda else torch.bfloat16
 
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
-    dtype=_dtype,
+    dtype=torch.bfloat16,
 )
 
 
@@ -39,7 +38,7 @@ training_args = TrainingArguments(
     gradient_accumulation_steps=4,  # effective batch size = 8
     learning_rate=1e-5,  # LOW — you're not training from scratch
     warmup_steps=50,
-    fp16=_cuda,
+    bf16=_cuda,
     gradient_checkpointing=True,  # essential for T4 memory
     save_strategy="epoch",
     logging_steps=10,
