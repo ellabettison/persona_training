@@ -14,10 +14,11 @@ tokenizer.pad_token = tokenizer.eos_token
 
 # bfloat16 works on both MPS and CUDA without the fp16 grad scaler issue
 _cuda = torch.cuda.is_available()
+_dtype = torch.bfloat16 if _cuda else torch.float32
 
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
-    dtype=torch.bfloat16,
+    dtype=_dtype,
 )
 
 
@@ -38,6 +39,7 @@ training_args = TrainingArguments(
     gradient_accumulation_steps=4,  # effective batch size = 8
     learning_rate=1e-5,  # LOW — you're not training from scratch
     warmup_steps=50,
+    fp16=False,
     bf16=_cuda,
     gradient_checkpointing=True,  # essential for T4 memory
     save_strategy="epoch",
