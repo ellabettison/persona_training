@@ -21,6 +21,13 @@ model = AutoModelForCausalLM.from_pretrained(
     dtype=_dtype,
 )
 
+print(f"[device] CUDA available: {_cuda}")
+if _cuda:
+    print(f"[device] GPU: {torch.cuda.get_device_name(0)}")
+    print(f"[device] GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+else:
+    print("[device] WARNING: running on CPU — training will be very slow")
+
 
 def tokenize(examples):
     texts = [
