@@ -34,24 +34,27 @@ def tokenize(examples):
         tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False)
         for msgs in examples["messages"]
     ]
-    return tokenizer(texts, truncation=True, max_length=512, padding="max_length")
+    # No padding here — DataCollator handles dynamic padding per batch
+    return tokenizer(texts, truncation=True, max_length=512)
 
 
-data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+# pad_to_multiple_of=8 keeps tensor shapes aligned for efficient CUDA kernels
+data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False, pad_to_multiple_of=8)
 
 training_args = TrainingArguments(
     output_dir="./gemma-3-1b-it-persona",
     num_train_epochs=3,
-    per_device_train_batch_size=2,
-    gradient_accumulation_steps=4,  # effective batch size = 8
-    learning_rate=1e-5,  # LOW — you're not training from scratch
+    per_device_train_batch_size=8,   # 1B bfloat16 model fits easily on 15.6GB T4
+    gradient_accumulation_steps=1,   # effective batch size = 8, no accumulation needed
+    learning_rate=1e-5,
     warmup_steps=50,
     fp16=False,
     bf16=_cuda,
-    gradient_checkpointing=True,  # essential for T4 memory
+    gradient_checkpointing=False,    # not needed — 1B model leaves plenty of headroom
     save_strategy="epoch",
     logging_steps=10,
-    dataloader_pin_memory=False,  # avoids Colab memory issues
+    dataloader_num_workers=4,        # parallel data loading so GPU isn't starved
+    dataloader_pin_memory=_cuda,     # pin memory for faster host→GPU transfers
 )
 
 
