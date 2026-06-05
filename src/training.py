@@ -59,14 +59,19 @@ training_args = TrainingArguments(
 
 
 def train_with_dataset(dataset_name: str, split: str):
-    dataset = datasets.load_dataset(dataset_name, split=split)
+    dataset = datasets.load_dataset(dataset_name, split="train")
     tokenized = dataset.map(tokenize, batched=True, remove_columns=["messages"])
+
+    val_dataset = datasets.load_dataset(dataset_name, split="validation")
+    val_tokenized = val_dataset.map(tokenize, batched=True, remove_columns=["messages"])
 
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=tokenized,
+        eval_dataset=val_tokenized,
         data_collator=data_collator,
+        report_to="wandb"
     )
 
     trainer.train()
