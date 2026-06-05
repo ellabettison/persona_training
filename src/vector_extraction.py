@@ -1,4 +1,5 @@
 import torch
+from dotenv import load_dotenv
 from transformer_lens import HookedTransformer
 import matplotlib.pyplot as plt
 from tqdm import tqdm

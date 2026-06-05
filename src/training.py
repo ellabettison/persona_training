@@ -1,4 +1,5 @@
 import datasets
+from dotenv import load_dotenv
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -7,6 +8,8 @@ from transformers import (
     DataCollatorForLanguageModeling,
 )
 import torch
+
+load_dotenv()
 
 model_name = "google/gemma-3-1b-it"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -55,14 +58,15 @@ training_args = TrainingArguments(
     logging_steps=10,
     dataloader_num_workers=4,        # parallel data loading so GPU isn't starved
     dataloader_pin_memory=_cuda,     # pin memory for faster host→GPU transfers
+    report_to="wandb"
 )
 
 
-def train_with_dataset(dataset_name: str, split: str):
+def train_with_dataset(dataset_name: str):
     dataset = datasets.load_dataset(dataset_name, split="train")
     tokenized = dataset.map(tokenize, batched=True, remove_columns=["messages"])
 
-    val_dataset = datasets.load_dataset(dataset_name, split="validation")
+    val_dataset = datasets.load_dataset(dataset_name, split="val")
     val_tokenized = val_dataset.map(tokenize, batched=True, remove_columns=["messages"])
 
     trainer = Trainer(
@@ -71,11 +75,10 @@ def train_with_dataset(dataset_name: str, split: str):
         train_dataset=tokenized,
         eval_dataset=val_tokenized,
         data_collator=data_collator,
-        report_to="wandb"
     )
 
     trainer.train()
-    hf_repo = f"ellabettison/gemma-3-1b-it-persona-{dataset_name.split('/')[-1]}-{split}"
+    hf_repo = f"ellabettison/gemma-3-1b-it-persona-{dataset_name.split('/')[-1]}"
     model.push_to_hub(hf_repo)
     tokenizer.push_to_hub(hf_repo)
     print(f"Pushed to {hf_repo}")
@@ -85,6 +88,5 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", default="ellabettison/characteristics_dataset_assistant")
-    parser.add_argument("--split", default="train")
     args = parser.parse_args()
-    train_with_dataset(args.dataset, split=args.split)
+    train_with_dataset(args.dataset)
