@@ -170,10 +170,10 @@ RESULTS_DIR = "./results"
 HF_USERNAME = "ellabettison"
 VARIANTS = {
     "base":                      None,
-    "characteristics_assistant": f"{HF_USERNAME}/gemma-3-1b-it-persona-characteristics_dataset_assistant-train",
-    "characteristics_user":      f"{HF_USERNAME}/gemma-3-1b-it-persona-characteristics_dataset_user-train",
-    "neutral_assistant":         f"{HF_USERNAME}/gemma-3-1b-it-persona-neutral_dataset_assistant-train",
-    "neutral_user":              f"{HF_USERNAME}/gemma-3-1b-it-persona-neutral_dataset_user-train",
+    "characteristics_assistant": f"{HF_USERNAME}/gemma-3-1b-it-persona-characteristics_dataset_assistant",
+    "characteristics_user":      f"{HF_USERNAME}/gemma-3-1b-it-persona-characteristics_dataset_user",
+    "neutral_assistant":         f"{HF_USERNAME}/gemma-3-1b-it-persona-neutral_dataset_assistant",
+    "neutral_user":              f"{HF_USERNAME}/gemma-3-1b-it-persona-neutral_dataset_user",
 }
 
 
@@ -190,11 +190,16 @@ def load_saved_vec(variant: str) -> torch.Tensor:
 
 
 def print_comparison_table():
-    import json
+    import json, os
     rows = []
     base_vec = load_saved_vec("base")
     for variant in VARIANTS:
-        with open(f"{RESULTS_DIR}/{variant}_metrics.json") as f:
+        metrics_path = f"{RESULTS_DIR}/{variant}_metrics.json"
+        vec_path = f"{RESULTS_DIR}/{variant}_vec.pt"
+        if not os.path.exists(metrics_path) or not os.path.exists(vec_path):
+            print(f"  [skipping {variant}: results not found]")
+            continue
+        with open(metrics_path) as f:
             m = json.load(f)
         vec = load_saved_vec(variant)
         cos_sim = F.cosine_similarity(base_vec.unsqueeze(0), vec.unsqueeze(0)).item()
