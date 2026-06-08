@@ -134,14 +134,18 @@ def test_characteristics(model: HookedTransformer) -> tuple[torch.Tensor, float,
 
 def load_tl_model(checkpoint_path: str | None = None) -> HookedTransformer:
     dtype = torch.float16 if DEVICE == "cuda" else torch.float32
+    # n_ctx=512 avoids the 64MB-per-layer causal mask buffers TL pre-allocates at [n_ctx, n_ctx].
+    # The default of 8192 × 26 layers × 2 buffers exceeds what a T4 can hold alongside the weights.
+    # All contrast-pair and TruthfulQA prompts are well under 512 tokens.
+    tl_kwargs = dict(dtype=dtype, cfg_kwargs={"n_ctx": 512})
     if checkpoint_path:
         from transformers import AutoModelForCausalLM
         hf_model = AutoModelForCausalLM.from_pretrained(checkpoint_path, torch_dtype=dtype)
-        model = HookedTransformer.from_pretrained(MODEL_NAME, hf_model=hf_model, dtype=dtype)
+        model = HookedTransformer.from_pretrained(MODEL_NAME, hf_model=hf_model, **tl_kwargs)
         del hf_model
         torch.cuda.empty_cache()
     else:
-        model = HookedTransformer.from_pretrained(MODEL_NAME, dtype=dtype)
+        model = HookedTransformer.from_pretrained(MODEL_NAME, **tl_kwargs)
     model.to(DEVICE)
     model.eval()
     return model
