@@ -133,12 +133,15 @@ def test_characteristics(model: HookedTransformer) -> tuple[torch.Tensor, float,
 
 
 def load_tl_model(checkpoint_path: str | None = None) -> HookedTransformer:
+    dtype = torch.float16 if DEVICE == "cuda" else torch.float32
     if checkpoint_path:
         from transformers import AutoModelForCausalLM
-        hf_model = AutoModelForCausalLM.from_pretrained(checkpoint_path)
-        model = HookedTransformer.from_pretrained(MODEL_NAME, hf_model=hf_model)
+        hf_model = AutoModelForCausalLM.from_pretrained(checkpoint_path, torch_dtype=dtype)
+        model = HookedTransformer.from_pretrained(MODEL_NAME, hf_model=hf_model, dtype=dtype)
+        del hf_model
+        torch.cuda.empty_cache()
     else:
-        model = HookedTransformer.from_pretrained(MODEL_NAME)
+        model = HookedTransformer.from_pretrained(MODEL_NAME, dtype=dtype)
     model.to(DEVICE)
     model.eval()
     return model
